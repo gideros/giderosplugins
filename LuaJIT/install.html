@@ -1,0 +1,34 @@
+<h1>Installation desktops</h1>
+<h2>Windows</h2>
+<p>Copy luajit.dll file from luajit folder to your Gideros installation folder (where you have lua.dll file)</p>
+<p>Delete lua.dll file</p>
+<p>Rename luajit.dll to lua.dll</p>
+<h2>Mac OSX</h2>
+<p>Open Gideros installation folder</p>
+<p>Right click on GiderosPlayer and select Show Package Contents</p>
+<p>Navigate to Contents/Frameworks</p>
+<p>Copy libluajit.dylib file from luajit folder</p>
+<p>Delete liblua.1.dylib file</p>
+<p>Rename libluajit.dylib to liblua.1.dylib</p>
+
+<h1>Installation mobiles</h1>
+<h2>Prerequisites</h2>
+<p>To make mobile project work with LuaJIT you need to make some changes to Gideros Installation and <strong>reexport the project's assets</strong> again</p>
+<h3>Windows installation</h3>
+<ul>
+ <li>Inside Gideros installation folder, go to Tools folder and rename luac.exe to luac2.exe</li>
+</ul>
+<h3>Mac OSX installation</h3>
+<ul>
+ <li>Inside Gideros installation folder, right click on Gideros Studio and select Show Package Contents</li>
+ <li>Navigate to Contents/Tools and rename luac to luac2</li>
+</ul>
+
+<h2>Android</h2>
+<p>Copy libs folder from luajit folder into your exported project overriding existing liblua.so files</p>
+
+<h2>IOS</h2>
+<p>Copy liblua.a from luajit folder into your xCode's project folder overriding existing liblua.a</p>
+
+<h1>Reverting back</h1>
+<p>If for some reason you want to revert back to plain lua, there are old lua binaries for each platform available in plain-lua directory</p>
