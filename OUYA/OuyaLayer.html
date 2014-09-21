@@ -1,0 +1,23 @@
+<h1>Implementing OUYALayer.lua</h1>
+<p>OUYALayer allows you to make any your click/touch scene objects to DPAD selectable Ouya compatible objects just use it as scene base class or layer on the scene</p>
+<p>All you need to do is additionally to adding selectable objects as child or any level subchild of the OUYALayer, you additionally need to call OUYALayer:addObject(sprite) on every selectable object</p>
+<p>Also as ouya object is global, all added events are kept with it, but adding ouya events to OUYALayer, it will automatically manage them for specific scenes/layers</p>
+<p>Implement :back() method to ouya layer to be automatically call it uppon OUYA_A button press</p>
+<p>Here is an example of OUYALayer in action: <a href='http://www.youtube.com/watch?v=q8uR9sAQg0g' target='_blank'>http://www.youtube.com/watch?v=q8uR9sAQg0g</a></p>
+
+<h1>API Reference</h1>
+<h3>Methods</h3>
+<p><strong>OUYALayer:addObject(sprite, id)</strong> - adds selectable objects (basically you should add any object that can be clicked), providing order id (first object is automatically selected)</p>
+<p><strong>OUYALayer:setFillStyle()</strong> - setting the fill style of the hover</p>
+<p><strong>OUYALayer:setLineStyle()</strong> - setting the line style of the hover</p>
+<p><strong>OUYALayer:setHoverActive(bool)</strong> - set true to enable default hover, false to disable it</p>
+<p><strong>OUYALayer:disable()</strong> - disable all the ouya specific functionality of the layer (when working with sublayers as using OUYALayer for popups)</p>
+<p><strong>OUYALayer:enable()</strong> - enable all the ouya specific functionality of the layer (enabled by default)</p>
+
+<h3>Events</h3>
+<p><strong>"selected"</strong> - dispatched when any new object is selected and needs to be hovered
+<ul>
+<li><strong>e.object</strong> - contains the reference to selected object</li>
+</ul>
+</p>
+<p><strong>And all the other events of ouya object</strong></p>

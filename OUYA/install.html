@@ -1,0 +1,171 @@
+<p><strong>If you want to build the Ouya Gideros Player with your package id to test in-app purchases, you can:</strong></p> 
+<ul>
+<li>take OUYAPlayer Android exported project (it already has preinstalled plugin)</li>
+<li> open AndroidManifest.xml and change package="com.yourdomain.yourapp" to match yours</li>
+<li>then import it in Eclipse and build as you would with any apk</li>
+</ul>
+<p><strong>That will give you OUYA player with your own package id</strong></p>
+<p>Once testing done, you will have to install plugin to your apps exported Android project:</p>
+<h1>Plugin Installation</h1>
+<h2>Video tutorial available here: <a href='http://www.youtube.com/watch?v=5mMd27ksxko' target='_blank'>http://www.youtube.com/watch?v=5mMd27ksxko</a></h2>
+<h2>Android</h2>
+<p>Download and add OUYA SDK <a href='https://devs.ouya.tv/developers/odk' target='_blank'>https://devs.ouya.tv/developers/odk</a> <a href='https://devs.ouya.tv/developers/docs/setup' target='_blank'>https://devs.ouya.tv/developers/docs/setup</a></p>
+<p>Copy libs folder into your exported project</p>
+<p>Copy libs folder into your exported project</p>
+<p>Copy src folder into your exported project</p>
+<p>Add System.loadLibrary("ouya"); to your main activity</p>
+<p>Add "com.giderosmobile.android.plugins.ouya.GOuya" as external class in your main activity</p>
+<p>Add &lt;category android:name="tv.ouya.intent.category.GAME"/&gt; to your AndroidManifest</p>
+<p>Set minimal target 14 and target 16 api level in your AndroidManifest</p>
+<p>Modify keyDown and keyUp methods:
+<pre>@Override
+public boolean onKeyDown(int keyCode, KeyEvent event)
+{
+	if(GOuya.onKeyDown(keyCode, event))
+		return true;
+	if (GiderosApplication.getInstance().onKeyDown(keyCode, event) == true)
+		return true;
+	
+	return super.onKeyDown(keyCode, event);
+}
+
+
+@Override
+public boolean onKeyUp(int keyCode, KeyEvent event)
+{
+	if(GOuya.onKeyUp(keyCode, event))
+		return true;
+	if (GiderosApplication.getInstance().onKeyUp(keyCode, event) == true)
+		return true;
+	
+	return super.onKeyUp(keyCode, event);
+}</pre></p>
+<p>Add generic motion method:
+<pre>public boolean onGenericMotionEvent(MotionEvent event) {
+	return GOuya.onGenericMotionEvent(event);
+}</pre>
+</p>
+
+<h1>API Reference</h1>
+<h2>Methods</h2>
+<ul>
+<li>ouya:init(devId, appId) -- initialize Ouya for IAP with developer ID and contents of key.der</li>
+<li>ouya:requestProducts(tableWithProductIds) -- get information about producs</li>
+<li>ouya:requestPurchase(productId) -- purchase provided product</li>
+<li>ouya:requestReceipts() -- get all previous purchases</li>
+<li>ouya:requestUserId() -- get currently logged in user ID</li>
+</ul>
+<h2>Properties</h2>
+<ul>
+<li>KeyCode.BUTTON_DPAD_DOWN</li>
+<li>KeyCode.BUTTON_DPAD_LEFT</li>
+<li>KeyCode.BUTTON_DPAD_RIGHT</li>
+<li>KeyCode.BUTTON_DPAD_UP</li>
+<li>KeyCode.BUTTON_L1</li>
+<li>KeyCode.BUTTON_L2</li>
+<li>KeyCode.BUTTON_L3</li>
+<li>KeyCode.BUTTON_R1</li>
+<li>KeyCode.BUTTON_R2</li>
+<li>KeyCode.BUTTON_R3</li>
+<li>KeyCode.BUTTON_MENU</li>
+<li>KeyCode.BUTTON_O</li>
+<li>KeyCode.BUTTON_U</li>
+<li>KeyCode.BUTTON_Y</li>
+<li>KeyCode.BUTTON_A</li>
+</ul>
+<h2>Events</h2>
+<ul>
+<li>Event.KEY_DOWN --on button pressed
+<ul>
+<li>e.keyCode - code of key which was pressed</li>
+<li>e.playerId - id of player/joystick pressing the key</li>
+</ul>
+</li>
+<li>Event.KEY_UP --on button released
+<ul>
+<li>e.keyCode - code of key which was pressed</li>
+<li>e.playerId - id of player/joystick pressing the key</li>
+</ul>
+</li>
+<li>Event.RIGHT_JOYSTICK --on right joystick move
+<ul>
+<li>e.x - x vector</li>
+<li>e.y - y vector</li>
+<li>e.angle - angle in radians</li>
+<li>e.strength - strength (distance from center between 0 and 1)</li>
+<li>e.playerId - id of player/joystick pressing the key</li>
+</ul>
+</li>
+<li>Event.LEFT_JOYSTICK --on left joystick move
+<ul>
+<li>e.x - x vector</li>
+<li>e.y - y vector</li>
+<li>e.angle - angle in radians</li>
+<li>e.strength - strength (distance from center between 0 and 1)</li>
+<li>e.playerId - id of player/joystick pressing the key</li>
+</ul>
+</li>
+<li>Event.RIGHT_TRIGGER --on right trigger move
+<ul>
+<li>e.strength - strength (distance from start position between 0 and 1)</li>
+<li>e.playerId - id of player/joystick pressing the key</li>
+</ul>
+</li>
+<li>Event.LEFT_TRIGGER --on left trigger move
+<ul>
+<li>e.strength - strength (distance from start position between 0 and 1)</li>
+<li>e.playerId - id of player/joystick pressing the key</li>
+</ul>
+</li>
+<li>Event.USER_CHANGED --another user has logged in
+<ul>
+<li>e.userId - ID of user</li>
+</ul>
+</li>
+<li>Event.PRODUCT_REQUEST_SUCCESS --succesfuly retrieved product list
+<ul>
+<li>e.products - table with products</li>
+<li>e.products[].id - id of product</li>
+<li>e.products[].name - name of product</li>
+<li>e.products[].price - price of product in cents</li>
+</ul>
+</li>
+<li>Event.PRODUCT_REQUEST_FAILED --could not retrieve product list
+<ul>
+<li>e.error - error message</li>
+</ul>
+</li>
+<li>Event.PURCHASE_REQUEST_SUCCESS --successfully purchased product
+<ul>
+<li>e.productId - id of a purchased product</li>
+</ul>
+</li>
+<li>Event.PURCHASE_REQUEST_FAILED --could not purchase product
+<ul>
+<li>e.error - error message</li>
+</ul>
+</li>
+<li>Event.RECEIPT_REQUEST_SUCCESS --succesfuly retrieved receipt list
+<ul>
+<li>e.receipts - table with receipts</li>
+<li>e.receipts[].id - id of product bought</li>
+<li>e.receipts[].price - price of product in cents</li>
+<li>e.receipts[].time - time of purchase</li>
+</ul>
+</li>
+<li>Event.RECEIPT_REQUEST_FAILED --could not retrieve receipt list
+<ul>
+<li>e.error - error message</li>
+</ul>
+</li>
+<li>Event.USER_REQUEST_SUCCESS --succesfuly retrieved user id
+<ul>
+<li>e.userId - id of a user</li>
+</ul>
+</li>
+<li>Event.USER_REQUEST_FAILED --could not retrieve user id
+<ul>
+<li>e.error - error message</li>
+</ul>
+</li>
+</ul>

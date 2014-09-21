@@ -1,0 +1,82 @@
+First you need to provide developer and app keys like:
+
+<pre lang='lua'>
+
+local file = io.open("key.der", "rb")
+local appKey = file:read( "*a" )
+io.close( file )
+
+ouya:init("00000000-0000-0000-0000-000000000000", appKey)
+</pre>
+
+<p>Then basically all ouya:requestSomething methods have two events, success or failed, so you can request information about products by providing product ids</p>
+
+<strong>ouya:requestProducts(productListTable)</strong>
+
+<p>which raises either:</p>
+<p>Event.PRODUCT_REQUEST_SUCCESS --succesfuly retrieved product list </p>
+<ul>
+<li>e.products - table with products</li>
+<li>e.products[].id - id of product</li>
+<li>e.products[].name - name of product</li>
+<li>e.products[].price - price of product in cents</li>
+</ul>
+
+<p>or</p>
+
+<p>Event.PRODUCT_REQUEST_FAILED --could not retrieve product list </p>
+<ul>
+<li>e.error - error message</li>
+</ul>
+
+<p>then you can purchase a product by providing its ID</p>
+
+<p><strong>ouya:requestPurchase(productId)</strong></p>
+<p>which raises either:</p>
+<p>Event.PURCHASE_REQUEST_SUCCESS --successfully purchased product</p>
+<ul>
+<li>e.productId - id of a purchased product</li>
+</ul>
+
+<p>or</p>
+
+<p>Event.PURCHASE_REQUEST_FAILED --could not purchase product </p>
+<ul>
+<li>e.error - error message</li>
+</ul>
+
+<p>then you can check receipts of what can be purchased before</p>
+
+<p><strong>ouya:requestReceipts()</strong></p>
+<p>which raises either:</p>
+<p>Event.RECEIPT_REQUEST_SUCCESS --successfully retrieved receipt list </p>
+<ul>
+<li>e.receipts - table with receipts</li>
+<li>e.receipts[].id - id of product bought</li>
+<li>e.receipts[].uuid - app-generated purchase id</li>
+<li>e.receipts[].userId - id of the user made the purchase</li>
+<li>e.receipts[].price - price of product in cents</li>
+<li>e.receipts[].time - time of purchase</li>
+</ul>
+
+<p>or</p>
+
+<p>Event.RECEIPT_REQUEST_FAILED --could not retrieve receipt list </p>
+<ul>
+<li>e.error - error message</li>
+</ul>
+
+<p>and you can also retrieve ID of user currently logged in:</p>
+<p><strong>ouya:requestUserId()</strong></p>
+<p>which raises either:</p>
+<p>Event.USER_REQUEST_SUCCESS --succesfuly retrieved user id </p>
+<ul>
+<li>e.userId - id of a user</li>
+</ul>
+
+<p>or</p>
+
+<p>Event.USER_REQUEST_FAILED --could not retrieve user id </p>
+<ul>
+<li>e.error - error message</li>
+</ul>
