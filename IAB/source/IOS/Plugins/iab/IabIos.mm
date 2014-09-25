@@ -111,17 +111,15 @@
 		SKPaymentTransactionState state = transaction.transactionState;
 		
 		if(state == SKPaymentTransactionStateFailed)
-        {
-            giab_onPurchaseError([self.iap UTF8String], [transaction.error.localizedDescription UTF8String]);
-        }
+        	{
+	            [self finishTransaction:transaction];
+	            giab_onPurchaseError([self.iap UTF8String], [transaction.error.localizedDescription UTF8String]);
+	        }
 		else if(state == SKPaymentTransactionStateRestored || state == SKPaymentTransactionStatePurchased)
 		{
+		        [self finishTransaction:transaction];
 			giab_onPurchaseComplete([self.iap UTF8String], [[self.prodKeys objectForKey:transaction.payment.productIdentifier] UTF8String], [[transaction transactionIdentifier] UTF8String]);
 		}
-        if (state == SKPaymentTransactionStatePurchased)
-        {
-            [self finishTransaction:transaction];
-        }
 	}
 }
 
