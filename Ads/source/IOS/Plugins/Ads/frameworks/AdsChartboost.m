@@ -8,10 +8,10 @@
 #include "gideros.h"
 #import "AdsChartboost.h"
 #import "AdsClass.h"
+#import <Chartboost/CBNewsfeedUI.h>
 
 @implementation AdsChartboost
 -(id)init{
-    self.cb = [Chartboost sharedChartboost];
     self.mngr = [[AdsManager alloc] init];
     return self;
 }
@@ -23,44 +23,67 @@
 }
 
 -(void)setKey:(NSMutableArray*)parameters{
-    self.cb.appId = [parameters objectAtIndex:0];
-    self.cb.appSignature = [parameters objectAtIndex:1];
-    self.cb.delegate = self;
     [Chartboost startWithAppId:[parameters objectAtIndex:0] appSignature:[parameters objectAtIndex:1] delegate:self];
+    [CBNewsfeed startWithDelegate:self];
 }
 
 -(void)loadAd:(NSMutableArray*)parameters{
     NSString *type = [parameters objectAtIndex:0];
-    NSString *tag = nil;
+    NSString *tag = CBLocationDefault;
     if([parameters count] > 1)
         tag = [parameters objectAtIndex:1];
     if ([type isEqualToString:@"interstitial"] || [type isEqualToString:@"auto"]) {
         AdsStateChangeListener *listener = [[AdsStateChangeListener alloc] init];
         [listener setShow:^(){
             [AdsClass adDisplayed:[self class] forType:type];
-            if(tag != nil)
-                [[Chartboost sharedChartboost] showInterstitial:tag];
-            else
-                [[Chartboost sharedChartboost] showInterstitial:CBLocationHomeScreen];
+            [Chartboost showInterstitial:tag];
         }];
         [listener setDestroy:^(){}];
         [listener setHide:^(){}];
-        [self.mngr set:self.cb forType:type withListener:listener];
-        if(tag != nil)
-            [self.cb cacheInterstitial:tag];
-        else
-            [self.cb cacheInterstitial:CBLocationHomeScreen];
+        [self.mngr set:listener forType:type withListener:listener];
+        [Chartboost cacheInterstitial:tag];
     }
     else if ([type isEqualToString:@"moreapps"]) {
         AdsStateChangeListener *listener = [[AdsStateChangeListener alloc] init];
         [listener setShow:^(){
             [AdsClass adDisplayed:[self class] forType:type];
-            [self.cb showMoreApps:CBLocationHomeScreen];
+            [Chartboost showMoreApps:tag];
         }];
         [listener setDestroy:^(){}];
         [listener setHide:^(){}];
-        [self.mngr set:self.cb forType:type withListener:listener];
-        [self.cb cacheMoreApps:CBLocationHomeScreen];
+        [self.mngr set:listener forType:type withListener:listener];
+        [Chartboost cacheMoreApps:tag];
+    }
+    else if ([type isEqualToString:@"feed"]) {
+        AdsStateChangeListener *listener = [[AdsStateChangeListener alloc] init];
+        [listener setShow:^(){
+            [AdsClass adDisplayed:[self class] forType:type];
+            if([tag isEqualToString:@"notification"])
+                [CBNewsfeed showNotificationUI];
+            else
+                [CBNewsfeed showNewsfeedUI];
+        }];
+        [listener setDestroy:^(){}];
+        [listener setHide:^(){
+            if([tag isEqualToString:@"notification"])
+                [CBNewsfeed closeNotificationUI];
+            else
+                [CBNewsfeed closeNewsfeedUI];
+        }];
+        [self.mngr set:listener forType:type withListener:listener];
+        [self.mngr load:type];
+        [AdsClass adReceived:[self class] forType:type];
+    }
+    else if ([type isEqualToString:@"v4vc"]) {
+        AdsStateChangeListener *listener = [[AdsStateChangeListener alloc] init];
+        [listener setShow:^(){
+            [AdsClass adDisplayed:[self class] forType:type];
+            [Chartboost showRewardedVideo:tag];
+        }];
+        [listener setDestroy:^(){}];
+        [listener setHide:^(){}];
+        [self.mngr set:listener forType:type withListener:listener];
+        [Chartboost cacheRewardedVideo:tag];
     }
     else
     {
@@ -90,13 +113,13 @@
     return YES;
 }
 
+- (BOOL)shouldDisplayInterstitial:(NSString *)location{
+    return YES;
+}
+
 - (void)didCacheInterstitial:(NSString *)location{
     [AdsClass adReceived:[self class] forType:@"interstitial"];
     [self.mngr load:@"interstitial"];
-}
-
-- (BOOL)shouldDisplayInterstitial:(NSString *)location{
-    return YES;
 }
 
 - (void)didFailToLoadInterstitial:(NSString *)location{
@@ -106,7 +129,6 @@
 
 - (void)didDismissInterstitial:(NSString *)location{
     [AdsClass adDismissed:[self class] forType:@"interstitial"];
-    [self.cb cacheInterstitial:CBLocationHomeScreen];
 }
 
 - (void)didCloseInterstitial:(NSString *)location{
@@ -118,32 +140,65 @@
 }
 
 
-- (void)didCacheMoreApps{
+- (void)didCacheMoreApps:(NSString *)location{
     [AdsClass adReceived:[self class] forType:@"moreapps"];
     [self.mngr load:@"moreapps"];
 
 }
 
-- (BOOL)shouldDisplayMoreApps{
+- (BOOL)shouldDisplayMoreApps:(NSString *)location{
     return YES;
 }
 
-- (void)didFailToLoadMoreApps{
+- (void)didFailToLoadMoreApps:(CBLocation)location withError:(CBLoadError)error{
     [AdsClass adFailed:[self class] with:@"Failed to receive ads" forType:@"moreapps"];
     [self.mngr reset:@"moreapps"];
 }
 
-- (void)didDismissMoreApps{
+- (void)didDismissMoreApps:(NSString *)location{
     [AdsClass adDismissed:[self class] forType:@"moreapps"];
-    [self.cb cacheMoreApps:CBLocationHomeScreen];
 }
 
-- (void)didCloseMoreApps{
+- (void)didCloseMoreApps:(NSString *)location{
     [AdsClass adActionEnd:[self class] forType:@"moreapps"];
 }
 
-- (void)didClickMoreApps{
+- (void)didClickMoreApps:(NSString *)location{
     [AdsClass adActionBegin:[self class] forType:@"moreapps"];
+}
+
+// Called before a rewarded video will be displayed on the screen.
+- (BOOL)shouldDisplayRewardedVideo:(CBLocation)location{
+    return YES;
+}
+
+// Called after a rewarded video has been loaded from the Chartboost API
+// servers and cached locally.
+- (void)didCacheRewardedVideo:(CBLocation)location{
+    [AdsClass adReceived:[self class] forType:@"v4vc"];
+    [self.mngr load:@"v4vc"];
+}
+
+// Called after a rewarded video has attempted to load from the Chartboost API
+// servers but failed.
+- (void)didFailToLoadRewardedVideo:(CBLocation)location withError:(CBLoadError)error{
+    [AdsClass adFailed:[self class] with:@"Failed to receive ads" forType:@"v4vc"];
+    [self.mngr reset:@"v4vc"];
+}
+
+// Called after a rewarded video has been dismissed.
+- (void)didDismissRewardedVideo:(CBLocation)location{
+    [AdsClass adDismissed:[self class] forType:@"v4vc"];
+}
+
+// Called after a rewarded video has been clicked.
+- (void)didClickRewardedVideo:(CBLocation)location{
+    [AdsClass adActionBegin:[self class] forType:@"v4vc"];
+}
+
+// Called after a rewarded video has been viewed completely and user is eligible for reward.
+- (void)didCompleteRewardedVideo:(CBLocation)location withReward:(int)reward{
+    [AdsClass adActionEnd:[self class] forType:@"v4vc"];
 }
 
 @end
