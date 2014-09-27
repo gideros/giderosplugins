@@ -5,19 +5,17 @@ import android.app.Activity;
 import android.util.SparseArray;
 import android.view.KeyEvent;
 
+import com.chartboost.sdk.CBLocation;
 import com.chartboost.sdk.Chartboost;
-import com.chartboost.sdk.Chartboost.CBAgeGateConfirmation;
 import com.chartboost.sdk.ChartboostDelegate;
-import com.chartboost.sdk.Model.CBError.CBClickError;
 import com.chartboost.sdk.Model.CBError.CBImpressionError;
 import com.giderosmobile.android.plugins.ads.*;
 
-public class AdsChartboost implements AdsInterface, ChartboostDelegate{
+public class AdsChartboost extends ChartboostDelegate implements AdsInterface{
 	
 	private WeakReference<Activity> sActivity;
 	private String adsID;
 	private AdsManager mngr;
-	private Chartboost cb;
 	static AdsChartboost me;
 	
 	public void onCreate(WeakReference<Activity> activity)
@@ -25,32 +23,34 @@ public class AdsChartboost implements AdsInterface, ChartboostDelegate{
 		me = this;
 		sActivity = activity;
 		mngr = new AdsManager();
-		cb = Chartboost.sharedChartboost();
 	}
 	
 	//on destroy event
 	public void onDestroy()
 	{	
-		this.cb.onDestroy(sActivity.get());
+		Chartboost.onDestroy(sActivity.get());
 	}
 	
 	public void onStart()
 	{
-		this.cb.onStart(sActivity.get());
-		this.cb.startSession();
+		Chartboost.onStart(sActivity.get());
 	}
 
 	public void onStop()
 	{
-		this.cb.onStop(sActivity.get());
+		Chartboost.onStop(sActivity.get());
 	}
 	
-	public void onPause(){}
+	public void onPause(){
+		Chartboost.onPause(sActivity.get());
+	}
 		
-	public void onResume(){}
+	public void onResume(){
+		Chartboost.onResume(sActivity.get());
+	}
 	
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		if (this.cb.onBackPressed())
+		if (Chartboost.onBackPressed())
 			// If a Chartboost view exists, close it and return
 			return true;
 		else
@@ -61,8 +61,10 @@ public class AdsChartboost implements AdsInterface, ChartboostDelegate{
 	public void setKey(final Object parameters){
 		SparseArray<String> param = (SparseArray<String>)parameters;
 		adsID = param.get(0);
-		this.cb.onCreate(sActivity.get(), adsID, param.get(1), this);
-		cb.getPreferences().setImpressionsUseActivities(true);
+		Chartboost.startWithAppId(sActivity.get(), adsID, param.get(1));
+		Chartboost.setDelegate(this);
+		Chartboost.setImpressionsUseActivities(true);
+		Chartboost.onCreate(sActivity.get());
 		onStart();
 	}
 	
@@ -74,18 +76,18 @@ public class AdsChartboost implements AdsInterface, ChartboostDelegate{
 		final String tag = param.get(1);
 		if(type.equals("interstitial")){
 			if(tag != null)
-				Chartboost.sharedChartboost().cacheInterstitial(tag);
+				Chartboost.cacheInterstitial(tag);
 			else
-				Chartboost.sharedChartboost().cacheInterstitial();
-				mngr.set(Chartboost.sharedChartboost(), type, new AdsStateChangeListener(){
+				Chartboost.cacheInterstitial(CBLocation.LOCATION_DEFAULT);
+				mngr.set(Chartboost.class, type, new AdsStateChangeListener(){
 
 					@Override
 					public void onShow() {
 						Ads.adDisplayed(me, type);
 						if(tag != null)
-							Chartboost.sharedChartboost().showInterstitial(tag);
+							Chartboost.showInterstitial(tag);
 						else
-							Chartboost.sharedChartboost().showInterstitial();
+							Chartboost.showInterstitial(CBLocation.LOCATION_DEFAULT);
 					}
 
 					@Override
@@ -98,13 +100,41 @@ public class AdsChartboost implements AdsInterface, ChartboostDelegate{
 				mngr.setAutoKill(type, false);
 		}
 		else if(type.equals("moreapps")){
-			Chartboost.sharedChartboost().cacheMoreApps();
-			mngr.set(Chartboost.sharedChartboost(), type, new AdsStateChangeListener(){
+			if(tag != null)
+				Chartboost.cacheMoreApps(tag);
+			else
+				Chartboost.cacheMoreApps(CBLocation.LOCATION_DEFAULT);
+			mngr.set(Chartboost.class, type, new AdsStateChangeListener(){
 
 				@Override
 				public void onShow() {
 					Ads.adDisplayed(me, type);
-					Chartboost.sharedChartboost().showMoreApps();
+					if(tag != null)
+						Chartboost.showMoreApps(tag);
+					else
+						Chartboost.showMoreApps(CBLocation.LOCATION_DEFAULT);
+				}
+
+				@Override
+				public void onDestroy() {}	
+				@Override
+				public void onHide() {}	
+			});
+		}
+		else if(type.equals("v4vc")){
+			if(tag != null)
+				Chartboost.cacheRewardedVideo(tag);
+			else
+				Chartboost.cacheRewardedVideo(CBLocation.LOCATION_DEFAULT);
+			mngr.set(Chartboost.class, type, new AdsStateChangeListener(){
+
+				@Override
+				public void onShow() {
+					Ads.adDisplayed(me, type);
+					if(tag != null)
+						Chartboost.showRewardedVideo(tag);
+					else
+						Chartboost.showRewardedVideo(CBLocation.LOCATION_DEFAULT);
 				}
 
 				@Override
@@ -150,19 +180,17 @@ public class AdsChartboost implements AdsInterface, ChartboostDelegate{
 	}
 
 	@Override
-	public void didDismissMoreApps() {
+	public void didDismissMoreApps(String tag) {
 		Ads.adDismissed(this, "moreapps");
 	}
-
-	@Override
-	public void didShowInterstitial(String arg0) {
-	}
-
-	@Override
-	public void didShowMoreApps() {}
+	
+	 @Override
+     public void didDismissRewardedVideo(String location) {
+		 Ads.adDismissed(this, "v4vc");
+     }
 	
 	@Override
-	public void didCloseMoreApps() {
+	public void didCloseMoreApps(String tag) {
 		Ads.adActionEnd(this, "moreapps");
 	}
 
@@ -173,16 +201,26 @@ public class AdsChartboost implements AdsInterface, ChartboostDelegate{
 	}
 	
 	@Override
+    public void didCompleteRewardedVideo(String location, int reward) {
+       Ads.adActionEnd(this, "v4vc");
+    }
+	
+	@Override
 	public void didCacheInterstitial(String arg0) {
 		mngr.load("interstitial");
 		Ads.adReceived(this, "interstitial");
 	}
 
 	@Override
-	public void didCacheMoreApps() {
+	public void didCacheMoreApps(String tag) {
 		mngr.load("moreapps");
 		Ads.adReceived(this, "moreapps");
 	}
+	
+	@Override
+    public void didCacheRewardedVideo(String location) {
+		Ads.adReceived(this, "v4vc");
+    }
 
 	@Override
 	public void didClickInterstitial(String arg0) {
@@ -190,8 +228,13 @@ public class AdsChartboost implements AdsInterface, ChartboostDelegate{
 	}
 
 	@Override
-	public void didClickMoreApps() {
+	public void didClickMoreApps(String tag) {
 		Ads.adActionBegin(this, "moreapps");
+	}
+	
+	@Override
+	public boolean shouldRequestInterstitial(String arg0) {
+		return true;
 	}
 
 	@Override
@@ -200,29 +243,19 @@ public class AdsChartboost implements AdsInterface, ChartboostDelegate{
 	}
 
 	@Override
-	public boolean shouldDisplayLoadingViewForMoreApps() {
+	public boolean shouldDisplayMoreApps(String tag) {
 		return true;
 	}
-
+	
 	@Override
-	public boolean shouldDisplayMoreApps() {
+	public boolean shouldRequestMoreApps(String tag) {
 		return true;
 	}
-
+	
 	@Override
-	public boolean shouldRequestInterstitial(String arg0) {
-		return true;
-	}
-
-	@Override
-	public boolean shouldRequestInterstitialsInFirstSession() {
-		return true;
-	}
-
-	@Override
-	public boolean shouldRequestMoreApps() {
-		return true;
-	}
+    public boolean shouldDisplayRewardedVideo(String location) {
+        return true;
+    }
 
 	@Override
 	public void enableTesting() {
@@ -238,17 +271,14 @@ public class AdsChartboost implements AdsInterface, ChartboostDelegate{
 	}
 
 	@Override
-	public void didFailToLoadMoreApps(CBImpressionError arg0) {
-		Ads.adFailed(this, "moreapps", "Error");
+	public void didFailToLoadMoreApps(String tag, CBImpressionError error) {
+		Ads.adFailed(this, "moreapps", error.name());
 		mngr.reset("moreapps");
 	}
-
+	
 	@Override
-	public void didFailToRecordClick(String arg0, CBClickError arg1) {
-	}
-
-	@Override
-	public boolean shouldPauseClickForConfirmation(CBAgeGateConfirmation arg0) {
-		return false;
-	}
+    public void didFailToLoadRewardedVideo(String location, CBImpressionError error) {
+		Ads.adFailed(this, "v4vc", error.name());
+		mngr.reset("v4vc");
+    }
 }
