@@ -571,7 +571,7 @@ static int reportScore(lua_State* L)
 	return 0;
 }
 
-static int luaL_checktimescope(lua_State* L, int index)
+static GKLeaderboardTimeScope luaL_checktimescope(lua_State* L, int index)
 {
     GKLeaderboardTimeScope timeScope = GKLeaderboardTimeScopeAllTime;
     const char* timeScopeStr = luaL_checkstring(L, index);
@@ -595,7 +595,7 @@ static int luaL_checktimescope(lua_State* L, int index)
     return timeScope;
 }
 
-static int luaL_checkplayerscope(lua_State* L, int index)
+static GKLeaderboardPlayerScope luaL_checkplayerscope(lua_State* L, int index)
 {
     GKLeaderboardPlayerScope playerScope = GKLeaderboardPlayerScopeGlobal;
     const char* playScopeStr = luaL_checkstring(L, index);
