@@ -7,14 +7,15 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.Set;
 
-import com.amazon.inapp.purchasing.Item;
-import com.amazon.inapp.purchasing.ItemDataResponse;
-import com.amazon.inapp.purchasing.Offset;
-import com.amazon.inapp.purchasing.PurchaseResponse;
-import com.amazon.inapp.purchasing.PurchaseUpdatesResponse;
-import com.amazon.inapp.purchasing.PurchasingManager;
-import com.amazon.inapp.purchasing.BasePurchasingObserver;
-import com.amazon.inapp.purchasing.Receipt;
+import com.amazon.device.iap.PurchasingService;
+import com.amazon.device.iap.PurchasingListener;
+import com.amazon.device.iap.model.FulfillmentResult;
+import com.amazon.device.iap.model.Product;
+import com.amazon.device.iap.model.ProductDataResponse;
+import com.amazon.device.iap.model.PurchaseResponse;
+import com.amazon.device.iap.model.PurchaseUpdatesResponse;
+import com.amazon.device.iap.model.Receipt;
+import com.amazon.device.iap.model.UserDataResponse;
 import com.giderosmobile.android.plugins.iab.Iab;
 import com.giderosmobile.android.plugins.iab.IabInterface;
 
@@ -48,7 +49,8 @@ public class IabAmazon implements IabInterface {
 	@Override
 	public void onCreate(WeakReference<Activity> activity) {
 		sActivity = activity;
-		PurchasingManager.registerObserver(new IabAmazonObserver(this));
+		PurchasingService.registerListener(sActivity.get().getApplicationContext(), new IabAmazonListener(this));
+		PurchasingService.getUserData();
 	}
 
 	@Override
@@ -86,72 +88,61 @@ public class IabAmazon implements IabInterface {
 			String prodName = e.nextElement();
         	skuSet.add(products.get(prodName));
         }
-        PurchasingManager.initiateItemDataRequest(skuSet);
+        PurchasingService.getProductData(skuSet);
 	}
 
 	@Override
 	public void purchase(String productId) {
-		PurchasingManager.initiatePurchaseRequest(productId);
+		PurchasingService.purchase(productId);
 	}
 
 	@Override
 	public void restore() {
-		PurchasingManager.initiatePurchaseUpdatesRequest(Offset.BEGINNING);
+		PurchasingService.getPurchaseUpdates(true);
 	}
 }
 
-class IabAmazonObserver extends BasePurchasingObserver {
+class IabAmazonListener implements PurchasingListener {
 	
 	private IabAmazon caller;
 	
-	public IabAmazonObserver(IabAmazon iabAmazon) {
-		super(IabAmazon.sActivity.get());
+	public IabAmazonListener(IabAmazon iabAmazon) {
 		caller = iabAmazon;
 	}
-	
+
 	@Override
-	public void onSdkAvailable(boolean isSandboxMode){
-		IabAmazon.sdkAvailable = true;
-		if(IabAmazon.wasChecked)
-		{
-			Iab.available(caller);
-			IabAmazon.wasChecked = false;
-		}
+	public void onProductDataResponse(ProductDataResponse productDataResponse) {
+		switch (productDataResponse.getRequestStatus()) { 
+     	case SUCCESSFUL:
+     		final Map<String, Product> products = productDataResponse.getProductData();
+     		SparseArray<Bundle> arr = new SparseArray<Bundle>();
+     		int i = 0; 
+     		for (final String key : products.keySet()) {
+     			Product item = products.get(key);
+     	        Bundle map = new Bundle();
+     	        map.putString("productId", item.getSku());
+     	        map.putString("title", item.getTitle());
+     	        map.putString("description", item.getDescription());
+     	        map.putString("price", item.getPrice());
+     	        arr.put(i, map);
+     	        i++;
+     		}
+     		Iab.productsComplete(caller, arr);
+     		break;
+     	case FAILED:
+     		Iab.restoreError(caller, "Failed");
+     		break;
+     }
 	}
-	 
-	@Override
-	public void onItemDataResponse(ItemDataResponse itemDataResponse) {
-		switch (itemDataResponse.getItemDataRequestStatus()) { 
-         	case SUCCESSFUL_WITH_UNAVAILABLE_SKUS:
-         	case SUCCESSFUL:
-         		final Map<String, Item> items = itemDataResponse.getItemData();
-         		SparseArray<Bundle> arr = new SparseArray<Bundle>();
-         		int i = 0; 
-         		for (final String key : items.keySet()) {
-         			Item item = items.get(key);
-         	        Bundle map = new Bundle();
-         	        map.putString("productId", item.getSku());
-         	        map.putString("title", item.getTitle());
-         	        map.putString("description", item.getDescription());
-         	        map.putString("price", item.getPrice());
-         	        arr.put(i, map);
-         	        i++;
-         		}
-         		Iab.productsComplete(caller, arr);
-         		break;
-         	case FAILED:
-         		Iab.restoreError(caller, "Failed");
-         		break;
-         }
-	}
-	 
+
 	@Override
 	public void onPurchaseResponse(PurchaseResponse purchaseResponse) {
 	 
-		switch (purchaseResponse.getPurchaseRequestStatus()) {
+		switch (purchaseResponse.getRequestStatus()) {
 			case SUCCESSFUL:
 				final Receipt receipt = purchaseResponse.getReceipt();
-				Iab.purchaseComplete(caller, receipt.getSku(), purchaseResponse.getUserId()+receipt.getSku());
+				Iab.purchaseComplete(caller, receipt.getSku(), receipt.getReceiptId());
+				PurchasingService.notifyFulfillment(receipt.getReceiptId(), FulfillmentResult.FULFILLED);
 				break;
 			case FAILED:
 				Iab.purchaseError(caller, "Purchase Failed");
@@ -159,29 +150,34 @@ class IabAmazonObserver extends BasePurchasingObserver {
 			case INVALID_SKU:
 				Iab.purchaseError(caller, "Invalid SKU");
 				break;
-			case ALREADY_ENTITLED:
+			case ALREADY_PURCHASED:
 				Iab.purchaseError(caller, "Item was already purchased");
+				break;
+			case NOT_SUPPORTED:
+				Iab.purchaseError(caller, "Not Supported");
+				break;
+			default:
 				break;
          }
 	 
 	}
-	
-	@Override
-	 
+
+	@Override 
     public void onPurchaseUpdatesResponse(final PurchaseUpdatesResponse purchaseUpdatesResponse) {
-		switch (purchaseUpdatesResponse.getPurchaseUpdatesRequestStatus()) { 
+		switch (purchaseUpdatesResponse.getRequestStatus()) { 
         	case SUCCESSFUL:
         		for (final Receipt receipt : purchaseUpdatesResponse.getReceipts()) {
         			final String sku = receipt.getSku();
-        			switch (receipt.getItemType()) {
+        			switch (receipt.getProductType()) {
         				case ENTITLED:
-        					Iab.purchaseComplete(caller, sku, purchaseUpdatesResponse.getUserId()+receipt.getSku());
+        					Iab.purchaseComplete(caller, sku, receipt.getReceiptId());
+        					break;
+        				default:
         					break;
         			}
         		}
-        		final Offset newOffset = purchaseUpdatesResponse.getOffset();
-        		if (purchaseUpdatesResponse.isMore()) {
-        			PurchasingManager.initiatePurchaseUpdatesRequest(newOffset);
+        		if (purchaseUpdatesResponse.hasMore()) {
+        			PurchasingService.getPurchaseUpdates(false);
         		}
         		else
         		{
@@ -190,6 +186,21 @@ class IabAmazonObserver extends BasePurchasingObserver {
         		break;
         	case FAILED:
         		Iab.restoreError(caller, "Request Failed");
+        	case NOT_SUPPORTED:
+        		Iab.restoreError(caller, "Not supported");
+        		break;
+        	default:
+        		break;
         }
+	}
+
+	@Override
+	public void onUserDataResponse(UserDataResponse user) {
+		IabAmazon.sdkAvailable = true;
+		if(IabAmazon.wasChecked)
+		{
+			Iab.available(caller);
+			IabAmazon.wasChecked = false;
+		}
 	}
 } 
