@@ -12,7 +12,6 @@ import android.content.Context;
 import android.hardware.input.InputManager;
 import android.os.Handler;
 import android.os.Vibrator;
-import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -265,7 +264,6 @@ public class GControllerDefault implements GControllerInterface {
 			InputDevice device = InputDevice.getDevice(ids[i]);
 			if(checkDevice(device))
 			{
-				Log.d("GController", "ID: " + device.getName());
 				addDeviceBySystem(ids[i]);
 				String id = getIdentifier(device);
 				allIds.put(id, true);
@@ -276,7 +274,7 @@ public class GControllerDefault implements GControllerInterface {
 			Iterator<Map.Entry<Integer,String>> iter = systemDevices.entrySet().iterator();
 			while (iter.hasNext()) {
 				Map.Entry<Integer,String> entry = iter.next();
-				if(!allIds.containsKey(entry.getKey()))
+				if(!allIds.containsKey(entry.getValue()))
 				{
 					GControllerManager.removeDevice(entry.getValue());
 					playerDevices.remove(entry.getKey());
