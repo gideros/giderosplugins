@@ -3,7 +3,6 @@ package com.giderosmobile.android.plugins.controller;
 import java.lang.ref.WeakReference;
 
 import android.app.Activity;
-import android.os.Handler;
 
 import com.bda.controller.Controller;
 import com.bda.controller.ControllerListener;
@@ -19,12 +18,8 @@ public class GControllerMoga implements GControllerInterface, ControllerListener
 		sActivity = activity;
 		mController = Controller.getInstance(sActivity.get()); 
 		mController.init();
-		final GControllerMoga me = this;
-		sActivity.get().runOnUiThread(new Runnable(){
-			public void run(){
-				mController.setListener(me, new Handler());
-			}
-		});
+		mController.setListener(this, null);
+		mController.onResume();
 	}
 	
 	public void onDestroy(){
@@ -59,7 +54,7 @@ public class GControllerMoga implements GControllerInterface, ControllerListener
 	}
 
 	@Override
-	public void onKeyEvent(KeyEvent event) {
+	public void onKeyEvent(com.bda.controller.KeyEvent event) {
 		GController c = getController(event.getControllerId());
 		if(event.getAction() == KeyEvent.ACTION_DOWN) {
 			c.onKeyDown(event.getKeyCode());
@@ -71,7 +66,7 @@ public class GControllerMoga implements GControllerInterface, ControllerListener
 	}
 
 	@Override
-	public void onMotionEvent(MotionEvent event) {
+	public void onMotionEvent(com.bda.controller.MotionEvent event) {
 		GController controller = getController(event.getControllerId());
 		controller.handleLeftStick(event.getAxisValue(MotionEvent.AXIS_X), event.getAxisValue(MotionEvent.AXIS_Y));
 		controller.handleRightStick(event.getAxisValue(MotionEvent.AXIS_Z), event.getAxisValue(MotionEvent.AXIS_RZ));
