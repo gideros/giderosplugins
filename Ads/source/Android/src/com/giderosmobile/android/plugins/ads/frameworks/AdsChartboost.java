@@ -29,12 +29,10 @@ public class AdsChartboost extends ChartboostDelegate implements AdsInterface{
 	public void onDestroy()
 	{	
 		Chartboost.onDestroy(sActivity.get());
+		mngr.destroy();
 	}
 	
-	public void onStart()
-	{
-		Chartboost.onStart(sActivity.get());
-	}
+	public void onStart(){}
 
 	public void onStop()
 	{
@@ -62,10 +60,11 @@ public class AdsChartboost extends ChartboostDelegate implements AdsInterface{
 		SparseArray<String> param = (SparseArray<String>)parameters;
 		adsID = param.get(0);
 		Chartboost.startWithAppId(sActivity.get(), adsID, param.get(1));
-		Chartboost.setDelegate(this);
 		Chartboost.setImpressionsUseActivities(true);
+		Chartboost.setDelegate(this);
 		Chartboost.onCreate(sActivity.get());
-		onStart();
+		Chartboost.onStart(sActivity.get());
+		Chartboost.setShouldDisplayLoadingViewForMoreApps(true);
 	}
 	
 	//load an Ad
@@ -73,46 +72,36 @@ public class AdsChartboost extends ChartboostDelegate implements AdsInterface{
 	{
 		SparseArray<String> param = (SparseArray<String>)parameters;
 		final String type = param.get(0);
-		final String tag = param.get(1);
+		String second = param.get(1);
+		if(second == null)
+			second = CBLocation.LOCATION_DEFAULT;
+		final String tag = second;
 		if(type.equals("interstitial")){
-			if(tag != null)
-				Chartboost.cacheInterstitial(tag);
+			mngr.set(Chartboost.class, type, new AdsStateChangeListener(){
+				@Override
+				public void onShow() {
+					Ads.adDisplayed(me, type);
+					Chartboost.showInterstitial(tag);
+				}
+
+				@Override
+				public void onDestroy() {}	
+				@Override
+				public void onHide() {}	
+			});
+			if(Chartboost.hasInterstitial(tag)){
+				mngr.load(type);
+				Ads.adReceived(me, type);
+			}
 			else
-				Chartboost.cacheInterstitial(CBLocation.LOCATION_DEFAULT);
-				mngr.set(Chartboost.class, type, new AdsStateChangeListener(){
-
-					@Override
-					public void onShow() {
-						Ads.adDisplayed(me, type);
-						if(tag != null)
-							Chartboost.showInterstitial(tag);
-						else
-							Chartboost.showInterstitial(CBLocation.LOCATION_DEFAULT);
-					}
-
-					@Override
-					public void onDestroy() {
-					}	
-					@Override
-					public void onHide() {
-					}	
-				});
-				mngr.setAutoKill(type, false);
+				Chartboost.cacheInterstitial(tag);
 		}
 		else if(type.equals("moreapps")){
-			if(tag != null)
-				Chartboost.cacheMoreApps(tag);
-			else
-				Chartboost.cacheMoreApps(CBLocation.LOCATION_DEFAULT);
 			mngr.set(Chartboost.class, type, new AdsStateChangeListener(){
-
 				@Override
 				public void onShow() {
 					Ads.adDisplayed(me, type);
-					if(tag != null)
-						Chartboost.showMoreApps(tag);
-					else
-						Chartboost.showMoreApps(CBLocation.LOCATION_DEFAULT);
+					Chartboost.showMoreApps(tag);
 				}
 
 				@Override
@@ -120,21 +109,19 @@ public class AdsChartboost extends ChartboostDelegate implements AdsInterface{
 				@Override
 				public void onHide() {}	
 			});
+			if(Chartboost.hasMoreApps(tag)){
+				mngr.load(type);
+				Ads.adReceived(me, type);
+			}
+			else
+				Chartboost.cacheMoreApps(tag);
 		}
 		else if(type.equals("v4vc")){
-			if(tag != null)
-				Chartboost.cacheRewardedVideo(tag);
-			else
-				Chartboost.cacheRewardedVideo(CBLocation.LOCATION_DEFAULT);
 			mngr.set(Chartboost.class, type, new AdsStateChangeListener(){
-
 				@Override
 				public void onShow() {
 					Ads.adDisplayed(me, type);
-					if(tag != null)
-						Chartboost.showRewardedVideo(tag);
-					else
-						Chartboost.showRewardedVideo(CBLocation.LOCATION_DEFAULT);
+					Chartboost.showRewardedVideo(tag);
 				}
 
 				@Override
@@ -142,6 +129,12 @@ public class AdsChartboost extends ChartboostDelegate implements AdsInterface{
 				@Override
 				public void onHide() {}	
 			});
+			if(Chartboost.hasRewardedVideo(tag)){
+				mngr.load(type);
+				Ads.adReceived(me, type);
+			}
+			else
+				Chartboost.cacheRewardedVideo(tag);
 		}
 		else
 		{
@@ -207,19 +200,26 @@ public class AdsChartboost extends ChartboostDelegate implements AdsInterface{
 	
 	@Override
 	public void didCacheInterstitial(String arg0) {
-		mngr.load("interstitial");
-		Ads.adReceived(this, "interstitial");
+		if(mngr.get("interstitial") != null && !mngr.isLoaded("interstitial")){
+			mngr.load("interstitial");
+			Ads.adReceived(this, "interstitial");
+		}
 	}
 
 	@Override
 	public void didCacheMoreApps(String tag) {
-		mngr.load("moreapps");
-		Ads.adReceived(this, "moreapps");
+		if(mngr.get("moreapps") != null && !mngr.isLoaded("moreapps")){
+			mngr.load("moreapps");
+			Ads.adReceived(this, "moreapps");
+		}
 	}
 	
 	@Override
     public void didCacheRewardedVideo(String location) {
-		Ads.adReceived(this, "v4vc");
+		if(mngr.get("v4vc") != null && !mngr.isLoaded("v4vc")){
+			mngr.load("v4vc");
+			Ads.adReceived(this, "v4vc");
+		}
     }
 
 	@Override
