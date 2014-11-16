@@ -175,6 +175,8 @@
     [AdsClass adActionBegin:[self.instance class] forType:[self.state getType]];
 }
 
--(void) ad:(ALAd *)ad wasHiddenIn:(UIView *)view{}
+-(void) ad:(ALAd *)ad wasHiddenIn:(UIView *)view{
+    [AdsClass adDismissed:[self.instance class] forType:[self.state getType]];
+}
 @end
 
