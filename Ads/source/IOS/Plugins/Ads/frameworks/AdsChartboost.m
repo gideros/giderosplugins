@@ -41,7 +41,12 @@
         [listener setDestroy:^(){}];
         [listener setHide:^(){}];
         [self.mngr set:listener forType:type withListener:listener];
-        [Chartboost cacheInterstitial:tag];
+        if([Chartboost hasInterstitial:tag]){
+            [self.mngr load:type];
+            [AdsClass adReceived:[self class] forType:type];
+        }
+        else
+            [Chartboost cacheInterstitial:tag];
     }
     else if ([type isEqualToString:@"moreapps"]) {
         AdsStateChangeListener *listener = [[AdsStateChangeListener alloc] init];
@@ -52,7 +57,12 @@
         [listener setDestroy:^(){}];
         [listener setHide:^(){}];
         [self.mngr set:listener forType:type withListener:listener];
-        [Chartboost cacheMoreApps:tag];
+        if([Chartboost hasMoreApps:tag]){
+            [self.mngr load:type];
+            [AdsClass adReceived:[self class] forType:type];
+        }
+        else
+            [Chartboost cacheMoreApps:tag];
     }
     else if ([type isEqualToString:@"feed"]) {
         AdsStateChangeListener *listener = [[AdsStateChangeListener alloc] init];
@@ -83,7 +93,12 @@
         [listener setDestroy:^(){}];
         [listener setHide:^(){}];
         [self.mngr set:listener forType:type withListener:listener];
-        [Chartboost cacheRewardedVideo:tag];
+        if([Chartboost hasRewardedVideo:tag]){
+            [self.mngr load:type];
+            [AdsClass adReceived:[self class] forType:type];
+        }
+        else
+            [Chartboost cacheRewardedVideo:tag];
     }
     else
     {
@@ -118,8 +133,10 @@
 }
 
 - (void)didCacheInterstitial:(NSString *)location{
-    [AdsClass adReceived:[self class] forType:@"interstitial"];
-    [self.mngr load:@"interstitial"];
+    if([self.mngr get:@"interstitial"] != nil && ![self.mngr isLoaded:@"interstitial"]){
+        [AdsClass adReceived:[self class] forType:@"interstitial"];
+        [self.mngr load:@"interstitial"];
+    }
 }
 
 - (void)didFailToLoadInterstitial:(NSString *)location{
@@ -141,8 +158,10 @@
 
 
 - (void)didCacheMoreApps:(NSString *)location{
-    [AdsClass adReceived:[self class] forType:@"moreapps"];
-    [self.mngr load:@"moreapps"];
+    if([self.mngr get:@"moreapps"] != nil && ![self.mngr isLoaded:@"moreapps"]){
+        [AdsClass adReceived:[self class] forType:@"moreapps"];
+        [self.mngr load:@"moreapps"];
+    }
 
 }
 
@@ -175,8 +194,10 @@
 // Called after a rewarded video has been loaded from the Chartboost API
 // servers and cached locally.
 - (void)didCacheRewardedVideo:(CBLocation)location{
-    [AdsClass adReceived:[self class] forType:@"v4vc"];
-    [self.mngr load:@"v4vc"];
+    if([self.mngr get:@"v4vc"] != nil && ![self.mngr isLoaded:@"v4vc"]){
+        [AdsClass adReceived:[self class] forType:@"v4vc"];
+        [self.mngr load:@"v4vc"];
+    }
 }
 
 // Called after a rewarded video has attempted to load from the Chartboost API
