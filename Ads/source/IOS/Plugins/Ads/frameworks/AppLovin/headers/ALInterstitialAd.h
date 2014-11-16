@@ -143,11 +143,18 @@
  */
 
 /**
- *  Optional frame to be passed through to the interstitial.
+ *  Frame to be passed through to the descendent UIView containing this interstitial.
  *
- *  We recommend not changing this unless you have a particular need to do so.
+ *  Note that this has no effect on video ads, as they are presented in their own view controller.
  */
-@property (assign, atomic) CGRect frame;
+@property (assign, nonatomic) CGRect frame;
+
+/**
+ *  Hidden setting to be passed through to the descendent UIView containing this interstitial.
+ *
+ *  Note that this has no effect on video ads, as they are presented in their own view controller.
+ */
+@property (assign, nonatomic) BOOL hidden;
 
 - (id)init __attribute__((unavailable("Use [ALInterstitialAd shared] or initInterstitialAdWithSdk: instead.")));
 @end
