@@ -291,8 +291,10 @@ public class GControllerDefault implements GControllerInterface {
 		boolean isGamepad = (device.getSources() & hasControllerFlags) == hasControllerFlags;
 		boolean isRemote = ((device.getSources() & hasRemoteFlags) == hasRemoteFlags)
 			    && device.getKeyboardType() == InputDevice.KEYBOARD_TYPE_NON_ALPHABETIC;
+		boolean isBlocked = (device.getName().toLowerCase().contains("cec"))
+				|| (device.getName().toLowerCase().contains("keyboard"));
 		boolean isScreen = (device.getSources() & hasScreenFlags) == hasScreenFlags;
-		return (device.getId() != 0 && (isGamepad || isRemote || isScreen));
+		return (device.getId() != 0 && (isGamepad || isRemote || isScreen)) && !isBlocked;
 	}
 	
 	private static GController getController(InputDevice device){
@@ -301,10 +303,10 @@ public class GControllerDefault implements GControllerInterface {
 	}
 	
 	private static String getIdentifier(InputDevice device){
-		int currentapiVersion = android.os.Build.VERSION.SDK_INT;
-		if (currentapiVersion >= android.os.Build.VERSION_CODES.JELLY_BEAN){
-			return device.getDescriptor();
-		}
+	//	int currentapiVersion = android.os.Build.VERSION.SDK_INT;
+	//	if (currentapiVersion >= android.os.Build.VERSION_CODES.JELLY_BEAN){
+	//		return device.getDescriptor();
+	//	}
 		return "Default_"+device.getId();
 	}
 
