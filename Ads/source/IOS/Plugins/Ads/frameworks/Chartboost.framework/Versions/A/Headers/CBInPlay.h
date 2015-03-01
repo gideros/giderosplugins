@@ -1,7 +1,7 @@
 /*
  * CBInPlay.h
  * Chartboost
- * 5.0.3
+ * 5.1.3
  *
  * Copyright 2011 Chartboost. All rights reserved.
  */
@@ -111,5 +111,15 @@
  with installs driven by the ad.
  */
 - (void)click;
+
+/*!
+ @abstract
+ Clears all CBInPlay objects from the cache locations.
+ 
+ @discussion This method will clear all the CBInPlay native ads from the internal cash. 
+ This is intended to be used to either force an update for all content or reduce the
+ memory overhead of this feature.
+ */
+- (void)clearCache;
 
 @end
