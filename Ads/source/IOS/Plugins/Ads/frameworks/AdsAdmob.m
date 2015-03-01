@@ -92,7 +92,7 @@
         GADRequest *request = [GADRequest request];
         if(![self.testID isEqualToString:@""])
         {
-            request.testDevices = [NSArray arrayWithObjects:self.testID, GAD_SIMULATOR_ID, nil];
+            request.testDevices = @[self.testID];
         }
         [interstitial_ loadRequest:request];
     }
@@ -133,7 +133,7 @@
                 GADRequest *request = [GADRequest request];
                 if(![self.testID isEqualToString:@""])
                 {
-                    request.testDevices = [NSArray arrayWithObjects:self.testID, GAD_SIMULATOR_ID, nil];
+                    request.testDevices = @[self.testID];
                 }
                 [view_ loadRequest:request];
 

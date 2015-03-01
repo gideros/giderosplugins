@@ -8,8 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "AdsProtocol.h"
-#import "GADBannerView.h"
-#import "GADInterstitial.h"
+@import GoogleMobileAds;
 #import <AdSupport/ASIdentifierManager.h>
 #import <CommonCrypto/CommonDigest.h>
 #import "AdsManager.h"

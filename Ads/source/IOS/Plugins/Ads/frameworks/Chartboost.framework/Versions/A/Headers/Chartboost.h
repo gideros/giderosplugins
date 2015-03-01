@@ -1,7 +1,7 @@
 /*
  * Chartboost.h
  * Chartboost
- * 5.0.3
+ * 5.1.3
  *
  * Copyright 2011 Chartboost. All rights reserved.
  */
@@ -21,7 +21,11 @@ typedef NS_ENUM(NSUInteger, CBFramework) {
     /*! Adobe AIR. */
     CBFrameworkAIR,
     /*! GameSalad. */
-    CBFrameworkGameSalad
+    CBFrameworkGameSalad,
+    /*! Cordova. */
+    CBFrameworkCordova,
+    /*! CocoonJS. */
+    CBFrameworkCocoonJS
 };
 
 /*!
@@ -153,6 +157,16 @@ extern CBLocation const CBLocationDefault;
 + (void)startWithAppId:(NSString*)appId
           appSignature:(NSString*)appSignature
               delegate:(id<ChartboostDelegate>)delegate;
+
+/*!
+ @abstract
+ Check to see if any views are visible
+ 
+ @return YES if there is any view visible
+ 
+ @discussion This method can be used to check if any chartboost ad's are visible on the app.
+ */
++ (BOOL)isAnyViewVisible;
 
 /*!
  @abstract
@@ -685,6 +699,17 @@ extern CBLocation const CBLocationDefault;
 - (void)didFailToLoadMoreApps:(CBLocation)location
                     withError:(CBLoadError)error;
 
+#pragma mark - Video Delegate
+
+/*!
+ @abstract
+ Called after videos have been successfully prefetched.
+ 
+ @discussion Implement to be notified of when the prefetching process has finished successfully.
+ */
+
+- (void)didPrefetchVideos;
+
 #pragma mark - Rewarded Video Delegate
 
 /*!
@@ -947,6 +972,8 @@ extern CBLocation const CBLocationDefault;
  @deprecated This method has been deprecated and will be removed in a future version.
  */
 - (void)didLoadInPlay __attribute__((deprecated("As of version 4.5, use didCacheInPlay:(CBLocation)location")));
+
+
 
 @end
 
