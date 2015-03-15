@@ -86,7 +86,7 @@
 		<activity android:name="com.applovin.adview.AppLovinInterstitialActivity" />
 		<activity android:name="com.applovin.adview.AppLovinConfirmationActivity" />
 		
-		<activity android:name="com.appodeal.ads.AdActivity"
+        <activity android:name="com.appodeal.ads.AdActivity"
             android:configChanges="orientation|screenSize"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <activity android:name="com.appodeal.ads.LoaderActivity"
